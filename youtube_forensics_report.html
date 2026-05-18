@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Channel Forensics — Deep Intelligence Report</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --border: #2a2a2a;
+    --border2: #333;
+    --text: #e8e4dc;
+    --muted: #888;
+    --accent: #c8a96e;
+    --accent2: #7c9e8f;
+    --accent3: #b87070;
+    --accent4: #7888b8;
+    --red: #c4544a;
+    --green: #6a9e7a;
+    --teal: #5a8e8e;
+    --heading-font: 'DM Serif Display', Georgia, serif;
+    --body-font: 'Syne', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body-font);
+    font-size: 15px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 10vh 8vw;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -20%;
+    width: 70vw;
+    height: 70vw;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    pointer-events: none;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: 30%;
+    width: 40vw;
+    height: 40vw;
+    border-radius: 50%;
+    border: 1px solid #1e1e1e;
+    pointer-events: none;
+  }
+  .cover-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 2rem;
+  }
+  .cover h1 {
+    font-family: var(--heading-font);
+    font-size: clamp(3rem, 7vw, 6.5rem);
+    line-height: 1.05;
+    font-weight: 400;
+    max-width: 800px;
+    margin-bottom: 2rem;
+  }
+  .cover h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .cover-sub {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.65;
+    margin-bottom: 3rem;
+  }
+  .cover-stats {
+    display: flex;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+  .cover-stat { }
+  .cover-stat-num {
+    font-family: var(--heading-font);
+    font-size: 2rem;
+    color: var(--accent);
+    font-style: italic;
+  }
+  .cover-stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── NAV / TOC ── */
+  .toc {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 8vw;
+  }
+  .toc h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+  }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    font-size: 13px;
+    transition: color 0.2s;
+  }
+  .toc-item:hover { color: var(--accent); }
+  .toc-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    min-width: 28px;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 6rem 8vw;
+    border-bottom: 1px solid var(--border);
+  }
+  .section:nth-child(even) { background: var(--bg2); }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+  .section > h2 {
+    font-family: var(--heading-font);
+    font-size: clamp(1.8rem, 4vw, 3.2rem);
+    font-weight: 400;
+    margin-bottom: 3rem;
+    line-height: 1.1;
+  }
+  .section > h2 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  /* ── CHANNEL CARD ── */
+  .channel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+  }
+  .channel-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .channel-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+  .channel-card.en::before { background: var(--accent); }
+  .channel-card.in::before { background: var(--accent2); }
+  .channel-card.featured::before { background: var(--accent3); }
+
+  .ch-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .ch-name {
+    font-family: var(--heading-font);
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+  .ch-name.en-name { color: var(--accent); }
+  .ch-name.in-name { color: var(--accent2); }
+
+  .ch-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .ch-row:last-child { border-bottom: none; }
+  .ch-key { color: var(--muted); min-width: 120px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; padding-top: 2px; }
+  .ch-val { text-align: right; flex: 1; }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+    margin: 2px;
+  }
+  .pill-gold { background: rgba(200,169,110,0.15); color: var(--accent); border: 1px solid rgba(200,169,110,0.3); }
+  .pill-teal { background: rgba(124,158,143,0.15); color: var(--accent2); border: 1px solid rgba(124,158,143,0.3); }
+  .pill-red { background: rgba(184,112,112,0.15); color: var(--accent3); border: 1px solid rgba(184,112,112,0.3); }
+  .pill-blue { background: rgba(120,136,184,0.15); color: var(--accent4); border: 1px solid rgba(120,136,184,0.3); }
+
+  /* ── DEEP ANALYSIS BLOCK ── */
+  .analysis-block {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+  }
+  .analysis-block h3 {
+    font-family: var(--heading-font);
+    font-size: 1.4rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .analysis-block h3.teal { color: var(--accent2); }
+  .analysis-block h3.red { color: var(--accent3); }
+  .analysis-block h3.blue { color: var(--accent4); }
+
+  .analysis-block h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 1.5rem 0 0.75rem;
+  }
+
+  .analysis-block p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #c8c4bc;
+    margin-bottom: 0.75rem;
+  }
+
+  .analysis-block ul, .analysis-block ol {
+    padding-left: 1.25rem;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #c8c4bc;
+  }
+  .analysis-block li { margin-bottom: 0.4rem; }
+
+  .analysis-block strong { color: var(--text); font-weight: 500; }
+
+  /* ── QUOTE BLOCK ── */
+  .insight {
+    border-left: 2px solid var(--accent);
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    background: rgba(200,169,110,0.05);
+  }
+  .insight p { font-size: 14px; font-style: italic; color: var(--text); margin: 0; }
+  .insight.teal { border-color: var(--accent2); background: rgba(124,158,143,0.05); }
+  .insight.red { border-color: var(--accent3); background: rgba(184,112,112,0.05); }
+  .insight.blue { border-color: var(--accent4); background: rgba(120,136,184,0.05); }
+
+  /* ── COMPARE TABLE ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 2rem 0;
+  }
+  .compare-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border2);
+  }
+  .compare-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: #c8c4bc;
+    line-height: 1.6;
+  }
+  .compare-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .compare-table .creator-col { color: var(--accent); font-weight: 500; }
+  .compare-table .creator-col.teal { color: var(--accent2); }
+
+  /* ── RANK BAR ── */
+  .rank-grid { margin: 2rem 0; }
+  .rank-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .rank-creator {
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 140px;
+    color: var(--muted);
+  }
+  .rank-bar-wrap { flex: 1; background: var(--bg3); height: 4px; border-radius: 2px; }
+  .rank-bar { height: 4px; border-radius: 2px; }
+  .rank-score {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 30px;
+    text-align: right;
+  }
+
+  /* ── LESSON GRID ── */
+  .lesson-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  .lesson-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1.5rem;
+  }
+  .lesson-num {
+    font-family: var(--mono);
+    font-size: 2rem;
+    color: rgba(200,169,110,0.2);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .lesson-title {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .lesson-body {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* ── FINAL VERDICT ── */
+  .verdict-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  .verdict-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    border-radius: 2px;
+  }
+  .verdict-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .verdict-answer {
+    font-family: var(--heading-font);
+    font-size: 1.2rem;
+    font-style: italic;
+    color: var(--accent);
+  }
+  .verdict-answer.teal { color: var(--accent2); }
+  .verdict-answer.red { color: var(--accent3); }
+  .verdict-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    line-height: 1.6;
+  }
+
+  /* ── FORMULA BLOCK ── */
+  .formula {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    padding: 1.25rem 1.5rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin: 1rem 0;
+    overflow-x: auto;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .sec-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 3rem 0;
+  }
+  .sec-divider-line { flex: 1; height: 1px; background: var(--border); }
+  .sec-divider-text {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* PRINT */
+  @media print {
+    .cover { min-height: auto; }
+    .section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════╗ -->
+<!-- ║             COVER                    ║ -->
+<!-- ╚══════════════════════════════════════╝ -->
+<div class="cover">
+  <div class="cover-label">Forensic Intelligence Report · YouTube Creator Analysis</div>
+  <h1>The Hidden Systems<br>Behind <em>Viral</em> Truth</h1>
+  <p class="cover-sub">A forensic deconstruction of 8 documentary and educational YouTube creators — their storytelling architectures, retention mechanics, psychological manipulation frameworks, viral engineering, and long-term brand strategies.</p>
+  <div class="cover-stats">
+    <div class="cover-stat">
+      <div class="cover-stat-num">8</div>
+      <div class="cover-stat-label">Creators Analyzed</div>
+    </div>
+    <div class="cover-stat">
+      <div class="cover-stat-num">12</div>
+      <div class="cover-stat-label">Analytical Sections</div>
+    </div>
+    <div class="cover-stat">
+      <div class="cover-stat-num">2</div>
+      <div class="cover-stat-label">Creative Ecosystems</div>
+    </div>
+    <div class="cover-stat">
+      <div class="cover-stat-num">∞</div>
+      <div class="cover-stat-label">Usable Patterns</div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗ -->
+<!-- ║             TOC                      ║ -->
+<!-- ╚══════════════════════════════════════╝ -->
+<div class="toc">
+  <h2>Contents</h2>
+  <div class="toc-grid">
+    <a href="#s1" class="toc-item"><span class="toc-num">01</span> Channel Identity</a>
+    <a href="#s2" class="toc-item"><span class="toc-num">02</span> Viral Video Analysis</a>
+    <a href="#s3" class="toc-item"><span class="toc-num">03</span> Scriptwriting Forensics</a>
+    <a href="#s4" class="toc-item"><span class="toc-num">04</span> Editing & Visual Language</a>
+    <a href="#s5" class="toc-item"><span class="toc-num">05</span> Thumbnail Engineering</a>
+    <a href="#s6" class="toc-item"><span class="toc-num">06</span> Title Engineering</a>
+    <a href="#s7" class="toc-item"><span class="toc-num">07</span> Comparative Analysis</a>
+    <a href="#s8" class="toc-item"><span class="toc-num">08</span> Psychological Manipulation</a>
+    <a href="#s9" class="toc-item"><span class="toc-num">09</span> Business & Brand Strategy</a>
+    <a href="#s10" class="toc-item"><span class="toc-num">10</span> Content Opportunities</a>
+    <a href="#s11" class="toc-item"><span class="toc-num">11</span> Replication Blueprint</a>
+    <a href="#s12" class="toc-item"><span class="toc-num">12</span> Final Verdict</a>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 1 — CHANNEL IDENTITY                               ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s1">
+  <div class="section-label">Section 01</div>
+  <h2>Channel <em>Identity</em> Analysis</h2>
+
+  <p style="color:var(--muted); font-size:14px; max-width:700px; margin-bottom:3rem;">Each creator sells a feeling, not just information. Below is the psychological contract between creator and viewer — the unspoken transaction that explains every content, design, and delivery decision.</p>
+
+  <!-- ENGLISH CHANNELS -->
+  <div class="sec-divider"><div class="sec-divider-line"></div><div class="sec-divider-text">English Channels</div><div class="sec-divider-line"></div></div>
+
+  <div class="channel-grid">
+
+    <!-- FERN -->
+    <div class="channel-card en">
+      <div class="ch-tag">EN · Essay Film</div>
+      <div class="ch-name en-name">Fern</div>
+      <div class="ch-row"><div class="ch-key">Niche</div><div class="ch-val">Existential / Psychological Essays</div></div>
+      <div class="ch-row"><div class="ch-key">Sub-niche</div><div class="ch-val">Modern alienation, meaning-making, digital self</div></div>
+      <div class="ch-row"><div class="ch-key">Audience</div><div class="ch-val">18–28, introspective, late-night YouTube spiral demographic</div></div>
+      <div class="ch-row"><div class="ch-key">Archetype</div><div class="ch-val">The Wounded Philosopher</div></div>
+      <div class="ch-row"><div class="ch-key">Core selling</div><div class="ch-val">
+        <span class="pill pill-gold">Transformation</span>
+        <span class="pill pill-gold">Tribal Belonging</span>
+        <span class="pill pill-red">Comfort</span>
+      </div></div>
+      <div class="ch-row"><div class="ch-key">Core feeling sold</div><div class="ch-val">"You are not broken. The world is."</div></div>
+    </div>
+
+    <!-- VOX -->
+    <div class="channel-card en">
+      <div class="ch-tag">EN · Explainer / Media</div>
+      <div class="ch-name en-name">Vox</div>
+      <div class="ch-row"><div class="ch-key">Niche</div><div class="ch-val">Explainer journalism, policy, culture</div></div>
+      <div class="ch-row"><div class="ch-key">Sub-niche</div><div class="ch-val">Visual data storytelling, systemic issue framing</div></div>
+      <div class="ch-row"><div class="ch-key">Audience</div><div class="ch-val">25–40, educated progressive liberals, policy-curious</div></div>
+      <div class="ch-row"><div class="ch-key">Archetype</div><div class="ch-val">The Trusted Journalist-Intellectual</div></div>
+      <div class="ch-row"><div class="ch-key">Core selling</div><div class="ch-val">
+        <span class="pill pill-blue">Intelligence</span>
+        <span class="pill pill-blue">Status</span>
+        <span class="pill pill-gold">Awareness</span>
+      </div></div>
+      <div class="ch-row"><div class="ch-key">Core feeling sold</div><div class="ch-val">"I finally understand how the world actually works."</div></div>
+    </div>
+
+    <!-- JOHNNY HARRIS -->
+    <div class="channel-card en featured">
+      <div class="ch-tag">EN · Investigative Documentary</div>
+      <div class="ch-name en-name">Johnny Harris</div>
+      <div class="ch-row"><div class="ch-key">Niche</div><div class="ch-val">Geopolitics, history, investigative documentary</div></div>
+      <div class="ch-row"><div class="ch-key">Sub-niche</div><div class="ch-val">Hidden systems of power, government corruption, borders</div></div>
+      <div class="ch-row"><div class="ch-key">Audience</div><div class="ch-val">22–38, globally curious, distrust of mainstream media</div></div>
+      <div class="ch-row"><div class="ch-key">Archetype</div><div class="ch-val">The Rebel Investigator</div></div>
+      <div class="ch-row"><div class="ch-key">Core selling</div><div class="ch-val">
+        <span class="pill pill-red">Truth</span>
+        <span class="pill pill-red">Rebellion</span>
+        <span class="pill pill-gold">Superiority</span>
+      </div></div>
+      <div class="ch-row"><div class="ch-key">Core feeling sold</div><div class="ch-val">"I see what they don't want me to see."</div></div>
+    </div>
+
+    <!-- JAMES JANI -->
+    <div class="channel-card en">
+      <div class="ch-tag">EN · Long-form Essay</div>
+      <div class="ch-name en-name">James Jani</div>
+      <div class="ch-row"><div class="ch-key">Niche</div><div class="ch-val">Dark psychology, cults, scams, societal manipulation</div></div>
+      <div class="ch-row"><div class="ch-key">Sub-niche</div><div class="ch-val">MLM, self-help industry, ideological manipulation</div></div>
+      <div class="ch-row"><div class="ch-key">Audience</div><div class="ch-val">20–35, sceptics, critical thinkers, former idealists</div></div>
+      <div class="ch-row"><div class="ch-key">Archetype</div><div class="ch-val">The Calm Exposer</div></div>
+      <div class="ch-row"><div class="ch-key">Core selling</div><div class="ch-val">
+        <span class="pill pill-gold">Truth</span>
+        <span class="pill pill-red">Outrage</span>
+        <span class="pill pill-blue">Superiority</span>
+      </div></div>
+      <div class="ch-row"><div class="ch-key">Core feeling sold</div><div class="ch-val">"I can't be manipulated because I understand manipulation."</div></div>
+    </div>
+
+  </div>
+
+  <!-- INDIAN CHANNELS -->
+  <div class="sec-divider"><div class="sec-divider-line"></div><div class="sec-divider-text">Indian Channels</div><div class="sec-divider-line"></div></div>
+
+  <div class="channel-grid">
+
+    <!-- DHRUV RATHEE -->
+    <div class="channel-card in featured">
+      <div class="ch-tag">IN · Political Commentary</div>
+      <div class="ch-name in-name">Dhruv Rathee</div>
+      <div class="ch-row"><div class="ch-key">Niche</div><div class="ch-val">Political analysis, fact-checking, environment</div></div>
+      <div class="ch-row"><div class="ch-key">Sub-niche</div><div class="ch-val">Anti-disinformation, democratic values, BJP criticism</div></div>
+      <div class="ch-row"><div class="ch-key">Audience</div><div class="ch-val">18–30, urban, English-educated, politically aware youth</div></div>
+      <div class="ch-row"><div class="ch-key">Archetype</div><div class="ch-val">The Righteous Crusader</div></div>
+      <div class="ch-row"><div class="ch-key">Core selling</div><div class="ch-val">
+        <span class="pill pill-teal">Truth</span>
+        <span class="pill pill-red">Outrage</span>
+        <span class="pill pill-teal">Tribal Belonging</span>
+      </div></div>
+      <div class="ch-row"><div class="ch-key">Core feeling sold</div><div class="ch-val">"I am on the right side of history."</div></div>
+    </div>
+
+    <!-- REAL WILL POWER -->
+    <div class="channel-card in">
+      <div class="ch-tag">IN · Motivation / Biographies</div>
+      <div class="ch-name in-name">Real Will Power</div>
+      <div class="ch-row"><div class="ch-key">Niche</div><div class="ch-val">Success stories, motivational biographies</div></div>
+      <div class="ch-row"><div class="ch-key">Sub-niche</div><div class="ch-val">Entrepreneurs, historical figures, rags-to-riches narratives</div></div>
+      <div class="ch-row"><div class="ch-key">Audience</div><div class="ch-val">16–28, aspirational, tier-2/3 cities, Hindi-medium</div></div>
+      <div class="ch-row"><div class="ch-key">Archetype</div><div class="ch-val">The Dream Activator</div></div>
+      <div class="ch-row"><div class="ch-key">Core selling</div><div class="ch-val">
+        <span class="pill pill-gold">Inspiration</span>
+        <span class="pill pill-gold">Transformation</span>
+        <span class="pill pill-teal">Comfort</span>
+      </div></div>
+      <div class="ch-row"><div class="ch-key">Core feeling sold</div><div class="ch-val">"If they could do it, so can I."</div></div>
+    </div>
+
+    <!-- MOHAK MANGAL -->
+    <div class="channel-card in">
+      <div class="ch-tag">IN · Science Communication</div>
+      <div class="ch-name in-name">Mohak Mangal</div>
+      <div class="ch-row"><div class="ch-key">Niche</div><div class="ch-val">Science, space, futurism, technology</div></div>
+      <div class="ch-row"><div class="ch-key">Sub-niche</div><div class="ch-val">ISRO, Mars, climate, biotech, Indian science identity</div></div>
+      <div class="ch-row"><div class="ch-key">Audience</div><div class="ch-val">16–30, students, engineering aspirants, science enthusiasts</div></div>
+      <div class="ch-row"><div class="ch-key">Archetype</div><div class="ch-val">The Passionate Explainer</div></div>
+      <div class="ch-row"><div class="ch-key">Core selling</div><div class="ch-val">
+        <span class="pill pill-blue">Curiosity</span>
+        <span class="pill pill-teal">Intelligence</span>
+        <span class="pill pill-blue">Inspiration</span>
+      </div></div>
+      <div class="ch-row"><div class="ch-key">Core feeling sold</div><div class="ch-val">"Science is thrilling, and I belong in this world."</div></div>
+    </div>
+
+    <!-- THINK SCHOOL -->
+    <div class="channel-card in">
+      <div class="ch-tag">IN · Business Education</div>
+      <div class="ch-name in-name">Think School</div>
+      <div class="ch-row"><div class="ch-key">Niche</div><div class="ch-val">Business case studies, brand analysis, economics</div></div>
+      <div class="ch-row"><div class="ch-key">Sub-niche</div><div class="ch-val">Startup stories, corporate strategy, entrepreneurship</div></div>
+      <div class="ch-row"><div class="ch-key">Audience</div><div class="ch-val">20–35, MBA aspirants, startup-curious, business students</div></div>
+      <div class="ch-row"><div class="ch-key">Archetype</div><div class="ch-val">The Enthusiastic Business Professor</div></div>
+      <div class="ch-row"><div class="ch-key">Core selling</div><div class="ch-val">
+        <span class="pill pill-gold">Intelligence</span>
+        <span class="pill pill-gold">Status</span>
+        <span class="pill pill-teal">Inspiration</span>
+      </div></div>
+      <div class="ch-row"><div class="ch-key">Core feeling sold</div><div class="ch-val">"Business thinking makes me smarter than my peers."</div></div>
+    </div>
+
+  </div>
+
+  <!-- AUDIENCE PSYCHOLOGY TABLE -->
+  <h3 style="font-family: var(--heading-font); font-weight:400; font-style:italic; font-size:1.3rem; color:var(--accent); margin: 3rem 0 1.5rem;">What Viewers Psychologically Gain</h3>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Creator</th>
+        <th>Primary Psychological Gain</th>
+        <th>Secondary Gain</th>
+        <th>Emotional Contract</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="creator-col">Fern</td><td>Validation of internal pain</td><td>Intellectual companionship</td><td>"You're watched over."</td></tr>
+      <tr><td class="creator-col">Vox</td><td>Elevated social intelligence</td><td>Confirmed worldview</td><td>"You're informed."</td></tr>
+      <tr><td class="creator-col">Johnny Harris</td><td>Secret knowledge of power systems</td><td>Moral courage proxy</td><td>"You see the truth."</td></tr>
+      <tr><td class="creator-col">James Jani</td><td>Inoculation against manipulation</td><td>Cathartic outrage</td><td>"You can't be fooled."</td></tr>
+      <tr><td class="creator-col teal">Dhruv Rathee</td><td>Political clarity and righteous anger</td><td>Tribal community membership</td><td>"You're on the right side."</td></tr>
+      <tr><td class="creator-col teal">Real Will Power</td><td>Vicarious ambition activation</td><td>Emotional comfort</td><td>"Your dream is possible."</td></tr>
+      <tr><td class="creator-col teal">Mohak Mangal</td><td>Scientific wonder and national pride</td><td>Identity as curious person</td><td>"You're a thinker."</td></tr>
+      <tr><td class="creator-col teal">Think School</td><td>Business intelligence status</td><td>Entrepreneurial motivation</td><td>"You're business-smart."</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 2 — VIRAL VIDEO ANALYSIS                           ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s2">
+  <div class="section-label">Section 02</div>
+  <h2>Viral Video <em>Forensics</em></h2>
+
+  <div class="analysis-block">
+    <h3>Fern — Viral Anatomy</h3>
+    <h4>Key Viral Videos</h4>
+    <p><strong>"Why You Feel Empty" / "The Void Inside You" / "The Problem With Being Normal"</strong> — these perform because they weaponize the 3am YouTube spiral state. The viewer isn't searching — they arrived at Fern through algorithmic recommendation when already in a low-energy, introspective mood.</p>
+    <h4>Why They Go Viral</h4>
+    <ul>
+      <li><strong>Title-as-mirror:</strong> "Why You Feel Empty" doesn't describe a topic — it diagnoses the viewer. The viewer clicks because they believe the video was made for them specifically.</li>
+      <li><strong>Thumbnail intimacy:</strong> Low-light, muted blue/green aesthetics, often a solitary figure or close-up of an expressive face. Triggers the "someone understands" reflex.</li>
+      <li><strong>Hook structure:</strong> Opens with a visceral universal feeling stated without preamble — "You wake up, everything's fine, and yet—" — no introduction, straight to the wound.</li>
+      <li><strong>Retention mechanic:</strong> The emotional journey from "this is my problem" → "here's the philosophical context" → "here's a path forward" creates a complete arc that viewers feel compelled to complete.</li>
+    </ul>
+    <h4>Repeatable Pattern</h4>
+    <div class="formula">TITLE = [Common Emotional Wound as Question] → HOOK = [State the feeling before naming the cause] → ARC = [Validate → Philosophize → Elevate]</div>
+    <div class="insight"><p>Fern's virality is entirely emotional contagion, not information-sharing. People don't share these videos to educate others — they share them as a form of saying "this is how I feel." The video becomes a proxy for an emotion the viewer can't articulate themselves.</p></div>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="teal">Vox — Viral Anatomy</h3>
+    <h4>Key Viral Videos</h4>
+    <p><strong>"How the US Shoots People" / "Why the US has so many tornadoes" / "The Singaporean Election" / Borders series / Earworm series</strong> — Vox's virality splits into two types: system-explainers that validate progressive frustration, and curiosity-satisfiers about the physical world.</p>
+    <h4>Why They Go Viral</h4>
+    <ul>
+      <li><strong>The "I never thought to ask this" trigger:</strong> Vox finds the question you didn't know you had ("Why does the US have electoral college?" feels obvious; "Why does the US have so many tornadoes?" is more seductive because geography rarely provokes moral engagement).</li>
+      <li><strong>Visual data journalism as rhetoric:</strong> Maps, charts, and animated graphics don't just explain — they persuade. When you see a visual comparison, you accept the framing without realizing it's editorializing.</li>
+      <li><strong>Social sharing as status:</strong> Vox videos are shared to signal intelligence. "Did you know this?" is the implied message of every share — the sharer gets reflected status from the video's authority.</li>
+    </ul>
+    <h4>Repeatable Pattern</h4>
+    <div class="formula">TITLE = [Counterintuitive System Question] → HOOK = [Show the surprising gap between expectation and reality] → MIDDLE = [Layered explanation with escalating graphics] → END = [Policy implication or moral clarity]</div>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="red">Johnny Harris — Viral Anatomy</h3>
+    <h4>Key Viral Videos</h4>
+    <p><strong>"Borders" series / "Russia is Cheating" / "Why France is still a colonial power" / "North Korea's Strange Propaganda" / "America is not a democracy"</strong></p>
+    <h4>Why They Go Viral</h4>
+    <ul>
+      <li><strong>The insider-outsider frame:</strong> Every JH video implies "they don't want you to know this." This activates the psychological reactance response — forbidden knowledge is more desirable.</li>
+      <li><strong>Personal presence as credibility:</strong> Johnny physically goes to places. He shows passport stamps, sits in cafes, walks through markets. This embodied presence — rare in YouTube journalism — creates a trust signal that animated graphics cannot replicate.</li>
+      <li><strong>Controlled outrage pacing:</strong> He doesn't yell. He presents damning evidence calmly, which makes the outrage feel self-generated by the viewer rather than performed by the host. This is far more persuasive.</li>
+      <li><strong>Geographic mystery hooks:</strong> Borders, maps, strange geography, geopolitical anomalies. These bypass ideological resistance because they seem factual/neutral before revealing a moral payload.</li>
+    </ul>
+    <div class="insight red"><p>Johnny Harris's most sophisticated technique: he makes viewers feel they're doing the analysis themselves by structuring evidence as a buildup before drawing conclusions. You arrive at outrage on your own — which means you own it. Owned emotions are more viral than transmitted ones.</p></div>
+    <h4>Repeatable Pattern</h4>
+    <div class="formula">TITLE = [Provocative claim about a country/system] → HOOK = [Surprising visual or fact that breaks assumption] → STRUCTURE = [3-layer evidence buildup] → TURN = [Reveal the hidden mechanism] → END = [Moral implication, understated]</div>
+  </div>
+
+  <div class="analysis-block">
+    <h3>James Jani — Viral Anatomy</h3>
+    <h4>Key Viral Videos</h4>
+    <p><strong>"The Largest Cult in the World" (self-help industry) / "The Dark Side of MLMs" / "Andrew Tate's Dangerous Ideology" / "The Problem with Hustle Culture"</strong></p>
+    <h4>Why They Go Viral</h4>
+    <ul>
+      <li><strong>High-risk topics, low-risk framing:</strong> By targeting universally suspicious things (MLMs, cults, hustle gurus), Jani captures viewers across ideological lines.</li>
+      <li><strong>The informed cynic audience:</strong> His audience wants to feel smart by watching someone systematically dismantle a scam. This is an intellectual pleasure — schadenfreude + intelligence signal.</li>
+      <li><strong>Length as credibility:</strong> 40–60 minute videos signal thoroughness. Completionists feel compelled to finish for the payoff. High completion rate signals quality to the algorithm.</li>
+      <li><strong>Thumbnail formula:</strong> Provocateur figure in thumbnail + skeptical/amused expression + bold text revealing the critique = instant clickable shorthand for "this person is about to get exposed."</li>
+    </ul>
+    <h4>Repeatable Pattern</h4>
+    <div class="formula">TITLE = [Famous thing] + [Damning claim] → HOOK = [Start with the seductive version before dismantling it] → STRUCTURE = [History → Growth → Dark mechanics → Victims → System] → END = [Wider societal implication]</div>
+  </div>
+
+  <div class="sec-divider"><div class="sec-divider-line"></div><div class="sec-divider-text">Indian Channels</div><div class="sec-divider-line"></div></div>
+
+  <div class="analysis-block">
+    <h3 class="teal">Dhruv Rathee — Viral Anatomy</h3>
+    <h4>Key Viral Videos</h4>
+    <p><strong>"India's Economy is Failing" / "The IT Cell Exposed" / "Why I Left India" / "Farmers' Protest — The Real Story" / "BJP's Propaganda Machine"</strong></p>
+    <h4>Why They Go Viral</h4>
+    <ul>
+      <li><strong>Political tribalism amplification:</strong> India's political polarization means Dhruv's videos go massively viral within one tribe and get rage-shared by the opposing tribe. Both forms of sharing boost the algorithm equally.</li>
+      <li><strong>First-mover advantage on political stories:</strong> He consistently publishes detailed, source-cited explainers on political events within days, capturing search traffic from people who want the "real story."</li>
+      <li><strong>Personal sacrifice narrative:</strong> Living abroad while critiquing India gives him a martyr posture — "I gave up my home to speak truth." This is enormously emotionally resonant for viewers who feel the same frustration but lack the courage to speak.</li>
+    </ul>
+    <div class="insight teal"><p>Dhruv Rathee's most powerful mechanism: he doesn't just inform — he provides an identity. Watching his videos marks you as part of a community that "sees through" propaganda. This tribal belonging is more addictive than any content format.</p></div>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="teal">Real Will Power — Viral Anatomy</h3>
+    <h4>Key Viral Videos</h4>
+    <p><strong>Stories of Elon Musk, Dhirubhai Ambani, APJ Abdul Kalam, Ratan Tata, Narendra Modi's early life</strong></p>
+    <h4>Why They Go Viral</h4>
+    <ul>
+      <li><strong>National hero mythology:</strong> Videos about beloved Indian figures like Ratan Tata or Kalam spread because sharing them is an act of cultural reverence — it signals good character to one's social network.</li>
+      <li><strong>Aspirational narrative structure:</strong> Every video is a hero's journey — poverty → struggle → insight → discipline → success. This formula maps onto the audience's own aspirations, making every video feel personally relevant.</li>
+      <li><strong>Emotional climax engineering:</strong> Background music swells at key moments of the subject's breakthrough. Viewers feel the emotion of the success vicariously, which releases dopamine and creates positive association with the channel.</li>
+    </ul>
+  </div>
+
+  <div class="analysis-block">
+    <h3>Mohak Mangal — Viral Anatomy</h3>
+    <h4>Key Viral Videos</h4>
+    <p><strong>ISRO/Chandrayaan explainers / "Can India reach Mars?" / "The Sun Will Kill Us All" / Quantum computing explainers / Elon Musk's plans</strong></p>
+    <h4>Why They Go Viral</h4>
+    <ul>
+      <li><strong>National pride + wonder combination:</strong> ISRO content generates viral sharing because viewers are simultaneously proud and amazed — two strong emotions that each independently drive sharing.</li>
+      <li><strong>Existential hook topics:</strong> Videos about things that threaten or awe humanity (solar events, black holes, nuclear war) tap into the primitive fear/wonder reflex regardless of prior interest in science.</li>
+      <li><strong>Credibility through complexity simplification:</strong> He takes genuinely hard concepts (quantum entanglement, orbital mechanics) and makes them feel accessible without dumbing them down. Viewers share because they feel intelligent after watching.</li>
+    </ul>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="teal">Think School — Viral Anatomy</h3>
+    <h4>Key Viral Videos</h4>
+    <p><strong>"Why Zomato is so successful" / "The Fall of Jet Airways" / "How Amul built an empire" / "Why Apple is so expensive in India" / Patagonia case study</strong></p>
+    <h4>Why They Go Viral</h4>
+    <ul>
+      <li><strong>Familiar brand as entry point:</strong> Videos about brands people already use (Zomato, Apple, Amazon) have a built-in audience of everyone who is already a customer. Curiosity about the business behind a familiar product is universal.</li>
+      <li><strong>Compressed MBA positioning:</strong> Think School explicitly positions its content as MBA-quality insights for free. This value framing makes viewers feel they're getting expensive knowledge at no cost — a psychologically powerful deal.</li>
+      <li><strong>Failure narratives outperform success:</strong> "The Fall of Jet Airways" outperforms most success stories because failure is more emotionally engaging, more relatable, and more instructive. Schadenfreude + lessons = premium virality.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 3 — SCRIPTWRITING FORENSICS                        ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s3">
+  <div class="section-label">Section 03</div>
+  <h2>Scriptwriting <em>Forensics</em></h2>
+
+  <div class="analysis-block">
+    <h3>The Universal Hook Architecture</h3>
+    <p>Every successful creator in this list uses a variant of the same 4-part intro architecture, executed in under 60 seconds:</p>
+    <div class="formula">
+      [DISRUPTION] → [STAKES] → [CURIOSITY GAP] → [IMPLICIT PROMISE]
+    </div>
+    <h4>How Each Creator Executes It</h4>
+    <table class="compare-table">
+      <thead><tr><th>Creator</th><th>Disruption</th><th>Stakes</th><th>Curiosity Gap</th><th>Promise</th></tr></thead>
+      <tbody>
+        <tr><td class="creator-col">Fern</td><td>Visceral emotional state named</td><td>Your existential wellbeing</td><td>"The cause is not what you think"</td><td>Emotional resolution</td></tr>
+        <tr><td class="creator-col">Vox</td><td>Surprising statistic or visual</td><td>Policy/societal consequence</td><td>"Here's why this happens"</td><td>Systemic understanding</td></tr>
+        <tr><td class="creator-col">Johnny Harris</td><td>Geographic or political anomaly</td><td>Global power/your country</td><td>"The story you haven't heard"</td><td>Forbidden knowledge</td></tr>
+        <tr><td class="creator-col">James Jani</td><td>Famous thing shown sympathetically first</td><td>Cultural manipulation</td><td>"Then something went wrong"</td><td>Expose + protection</td></tr>
+        <tr><td class="creator-col teal">Dhruv Rathee</td><td>Political fact that challenges assumption</td><td>Democracy/your future</td><td>"Here's the data they hide"</td><td>Truth + outrage</td></tr>
+        <tr><td class="creator-col teal">Real Will Power</td><td>The subject at their lowest point</td><td>The dream</td><td>"This is how they turned it around"</td><td>Hope + inspiration</td></tr>
+        <tr><td class="creator-col teal">Mohak Mangal</td><td>Scale-defying scientific fact</td><td>Humanity / India's future</td><td>"Here's how this actually works"</td><td>Wonder + national pride</td></tr>
+        <tr><td class="creator-col teal">Think School</td><td>Brand failure or unexpected success</td><td>Business / your career</td><td>"The real reason behind this"</td><td>Business intelligence</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="red">The 30-Second Retention Strategies</h3>
+    <p>The first 30 seconds is the only section where you compete with a viewer's thumb. Every creator below uses at least two of these simultaneously:</p>
+    <ul>
+      <li><strong>Cold open:</strong> Start mid-action, mid-sentence, or mid-emotion — never with channel intro. Johnny Harris often starts with "I'm standing in [location] and something is wrong here."</li>
+      <li><strong>The unanswered question:</strong> State a question in the first 10 seconds that won't be answered until minute 15. Fern: "Have you ever felt like you're living someone else's life?" The viewer mentally commits to staying until the answer.</li>
+      <li><strong>Visual contrast hook:</strong> Vox and Mohak Mangal show two opposing images/facts side by side in the first 20 seconds. Cognitive dissonance is unresolvable without continued watching.</li>
+      <li><strong>Social proof pre-load:</strong> Think School often opens by quoting a famous business figure. Instant borrowed authority.</li>
+      <li><strong>Emotional identification:</strong> Real Will Power and Fern open by describing a feeling — not a fact — so viewers who share that feeling are immediately personally invested.</li>
+    </ul>
+    <div class="insight red"><p>The most dangerous first 30 seconds in this group: Johnny Harris. He uses all five techniques simultaneously — you're in a location, you have a question, there's a visual anomaly, it involves your world, and he's personally telling you. It's almost impossible to leave.</p></div>
+  </div>
+
+  <div class="analysis-block">
+    <h3>Sentence Rhythm & Pacing Systems</h3>
+    <h4>High-Tension Rhythm (Johnny Harris, James Jani)</h4>
+    <p><strong>Pattern:</strong> Short declarative. Medium explanatory sentence that builds. Then another short punch. A longer sentence that expands the world and introduces complexity, and then — a fragment.</p>
+    <p>This creates a staccato-then-breath rhythm that mimics a detective unfolding evidence. Short sentences = facts. Long sentences = context. Fragment = revelation.</p>
+    <h4>Flow-State Rhythm (Fern, Dhruv Rathee)</h4>
+    <p>Longer sentences that cascade into each other, building emotional momentum. Commas do more work than periods. The viewer is carried rather than punched. Creates meditation-like engagement where time disappears.</p>
+    <h4>Professor Rhythm (Think School, Mohak Mangal, Vox)</h4>
+    <p>Point → Example → Implication → Point. Structured like good teaching. Each concept is given to the viewer, illustrated, then connected to the larger argument. Intellectually satisfying because it mimics classroom learning.</p>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="teal">Cliffhanger & Curiosity Loop Systems</h3>
+    <h4>Types Used Across These Creators</h4>
+    <ul>
+      <li><strong>The Deferred Answer:</strong> "I'll come back to why this matters in a moment." (Vox, Think School) — creates a mental bookmark that keeps the viewer present.</li>
+      <li><strong>The Coming Revelation:</strong> "What I'm about to show you changes everything." (Johnny Harris) — creates appointment viewing within the video itself.</li>
+      <li><strong>The Emotional Cliffhanger:</strong> "And then, everything fell apart." (Real Will Power, James Jani) — classic narrative tension.</li>
+      <li><strong>The Structural Mystery:</strong> "There's a reason I started with that story." (Fern, James Jani) — retroactive tension that makes viewers re-evaluate what they've already seen.</li>
+      <li><strong>The Intermission Statement:</strong> "Before we go further, I need to explain one thing." (Dhruv Rathee, Mohak Mangal) — breaks pace to rebuild tension before a key revelation.</li>
+    </ul>
+  </div>
+
+  <div class="analysis-block">
+    <h3>Reusable Script Architecture Framework</h3>
+    <div class="formula">
+ACT 1 — THE WOUND (0:00–3:00)
+  → State the anomaly / feeling / failure
+  → Make it personal (you/we/this country)
+  → Introduce 1 unexplained fact that creates the curiosity spine
+
+ACT 2 — THE WORLD (3:00–60% of video)
+  → Layer: History → Present → Why it matters
+  → Include 2–3 "I didn't expect this" reveals
+  → Use contrast structure: [what we think] vs [what is true]
+  → Place a mid-video cliffhanger at ~50%
+
+ACT 3 — THE TURN (Final 20%)
+  → The mechanism is revealed (WHY it is this way)
+  → Emotional or intellectual payoff
+  → Wider implication (this isn't just about X — it's about all of us)
+  → Close with a question or reflection, not a summary
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 4 — EDITING & VISUAL LANGUAGE                      ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s4">
+  <div class="section-label">Section 04</div>
+  <h2>Editing & <em>Visual Language</em></h2>
+
+  <div class="analysis-block">
+    <h3>Editing Speed as Emotional Register</h3>
+    <p>The pace of cuts is not aesthetic preference — it's emotional programming. Each creator uses editing speed as a subconscious signal about what kind of content this is:</p>
+    <table class="compare-table">
+      <thead><tr><th>Creator</th><th>Avg. Cut Rate</th><th>Cut Philosophy</th><th>Emotional Effect</th></tr></thead>
+      <tbody>
+        <tr><td class="creator-col">Fern</td><td>Very slow (10–30s per shot)</td><td>Breathing room for feeling</td><td>Contemplative, intimate, safe</td></tr>
+        <tr><td class="creator-col">Vox</td><td>Medium (3–8s)</td><td>Information-paced</td><td>Alert, intelligent, progressive</td></tr>
+        <tr><td class="creator-col">Johnny Harris</td><td>Dynamic (1–15s, varies by tension)</td><td>Rhythm mirrors narrative tension</td><td>Investigative momentum, urgency</td></tr>
+        <tr><td class="creator-col">James Jani</td><td>Slow-medium (5–15s)</td><td>Allows weight of information to land</td><td>Thoughtful outrage, measured gravity</td></tr>
+        <tr><td class="creator-col teal">Dhruv Rathee</td><td>Medium-fast (2–5s)</td><td>News-clip rhythm with graphic overlays</td><td>Urgency, journalistic authority</td></tr>
+        <tr><td class="creator-col teal">Real Will Power</td><td>Medium (4–8s)</td><td>Storytelling paced</td><td>Emotional flow, cinematic inspiration</td></tr>
+        <tr><td class="creator-col teal">Mohak Mangal</td><td>Medium (3–7s)</td><td>Visual explanation-driven</td><td>Wonder, intellectual engagement</td></tr>
+        <tr><td class="creator-col teal">Think School</td><td>Medium (3–6s)</td><td>Presentation/lecture rhythm</td><td>Educational authority, clarity</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="red">Visual Storytelling Systems</h3>
+    <h4>Johnny Harris — The Cinematic Investigator System</h4>
+    <ul>
+      <li><strong>Location footage + on-camera narration:</strong> Most powerful authenticity signal in YouTube journalism. Costs real money and time — becomes a moat.</li>
+      <li><strong>Custom map animations:</strong> Hand-crafted, stylized maps that have become his visual signature. Geographic visualization as editorial argument — borders drawn with purpose, scale distorted to make a point.</li>
+      <li><strong>Zooming into the map:</strong> A specific animated zoom from world view to specific territory creates a feeling of "closing in" on truth.</li>
+      <li><strong>Color grading:</strong> Warm, slightly desaturated documentary palette. Not social media bright. Signals seriousness.</li>
+    </ul>
+    <h4>Vox — The Motion Graphics Authority System</h4>
+    <ul>
+      <li><strong>Data visualization as argument:</strong> Every chart is designed to reinforce the editorial point, not just display data neutrally. This is propaganda technique disguised as journalism.</li>
+      <li><strong>The "zoom into text" graphic:</strong> Vox's signature move — highlighted text zooming in during narration creates a visual synonym for "this is important."</li>
+      <li><strong>Multiple visual channels simultaneously:</strong> On-screen text + graphics + narration + background music all carry independent information loads. Maximizes information density while maintaining engagement.</li>
+    </ul>
+    <h4>Fern — The Atmospheric Cinema System</h4>
+    <ul>
+      <li><strong>B-roll as mood, not information:</strong> Where Vox uses b-roll to explain, Fern uses it to feel. Footage of empty streets, rain on windows, lone figures. The b-roll doesn't illustrate a point — it inhabits an emotional state.</li>
+      <li><strong>Music as co-narrator:</strong> Fern's music doesn't underline the narration — it competes with it emotionally. The musical key, tempo, and texture carry meaning independent of the words.</li>
+      <li><strong>Text on screen sparingly:</strong> When words appear on screen in a Fern video, they carry disproportionate weight because they're rare. Scarcity creates emphasis.</li>
+    </ul>
+    <h4>Think School — The Classroom Explainer System</h4>
+    <ul>
+      <li><strong>Presentation slides as teaching tool:</strong> Simple, clean graphic overlays that look like MBA slides. Signals: this is structured knowledge, not just opinion.</li>
+      <li><strong>Host enthusiasm as editing engine:</strong> Rapid host speaking + fast b-roll cuts matching his energy. The editing matches the presenter's kinetics — creates a feeling of being taught by someone who genuinely loves the material.</li>
+    </ul>
+  </div>
+
+  <div class="analysis-block">
+    <h3>Music Strategy Analysis</h3>
+    <p>Music is the most underanalyzed retention tool in YouTube. Here's how these creators weaponize it:</p>
+    <ul>
+      <li><strong>Fern:</strong> Ambient/post-classical. Artists in the vein of Max Richter, Nils Frahm. Music sets emotional tone before narration begins — primes the viewer for vulnerability.</li>
+      <li><strong>Johnny Harris:</strong> Builds from neutral/ambient in setup sections to tense/dramatic during revelations. Music is a narrative device — its shift is a signal that something important is happening.</li>
+      <li><strong>Vox:</strong> Neutral, slightly upbeat. Designed to not distract. The intellectual register says "pay attention to the content, not the feeling."</li>
+      <li><strong>Dhruv Rathee:</strong> High-energy intro music, then neutral or mildly tense for body. Music signals "this is important news" — similar to news broadcast conventions.</li>
+      <li><strong>Real Will Power / Think School:</strong> Emotional swells at climactic narrative moments. Cinematic library music used strategically at peaks. Creates Pavlovian response — music swell = emotional payoff.</li>
+    </ul>
+    <div class="insight"><p>The most sophisticated music strategy: Johnny Harris. His music transitions are coordinated with narrative reveals — the music doesn't just accompany the story, it IS part of the storytelling. A viewer with their eyes closed could follow the emotional arc of a JH video through music alone.</p></div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 5 — THUMBNAIL ENGINEERING                          ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s5">
+  <div class="section-label">Section 05</div>
+  <h2>Thumbnail <em>Engineering</em></h2>
+
+  <div class="analysis-block">
+    <h3>The 3 Jobs of a Thumbnail</h3>
+    <p>Every successful thumbnail must simultaneously accomplish three things in under 300 milliseconds:</p>
+    <ol>
+      <li><strong>Stop the scroll</strong> — visual contrast, unexpected element, or emotional face that interrupts the feed's rhythm</li>
+      <li><strong>Signal the genre</strong> — the viewer must immediately understand "this is my kind of content"</li>
+      <li><strong>Create the gap</strong> — leave enough unexplained that the only resolution is clicking</li>
+    </ol>
+    <div class="formula">CLICK = Visual Interrupt + Genre Signal + Unresolved Question</div>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="teal">Channel-by-Channel Thumbnail Frameworks</h3>
+
+    <h4>Fern — The Aesthetic Emotion Frame</h4>
+    <ul>
+      <li>Muted, cinematic color palette (blues, greens, desaturated earth tones)</li>
+      <li>Solitary human figure or abstract visual, rarely direct face-staring</li>
+      <li>Minimal text — often just 3–5 words, philosophical phrasing</li>
+      <li>Creates feeling: "This video understands something I can't say"</li>
+      <li>Anti-thumbnail design — deliberately avoids YouTube clichés, which makes it stand out among them</li>
+    </ul>
+
+    <h4>Vox — The Information Authority Frame</h4>
+    <ul>
+      <li>Clean background, bold text overlay, data visualization element</li>
+      <li>Map or graphic as central element — signals "this is visual journalism"</li>
+      <li>Presenter face sometimes included as authority anchor</li>
+      <li>Color palette: brand orange/red used as accent against white/neutral</li>
+      <li>Key formula: <strong>[BOLD CLAIM] + [Visualized Evidence]</strong></li>
+    </ul>
+
+    <h4>Johnny Harris — The Investigative Reveal Frame</h4>
+    <ul>
+      <li>Creator's face with specific expression: furrowed brow + knowing look (not shock, not smile)</li>
+      <li>Map or geographic element as background</li>
+      <li>Short provocative text: "Why France is still a colonial power" — statement, not question</li>
+      <li>High contrast, slightly dark/dramatic color grading</li>
+      <li>Key formula: <strong>[Country/Subject] + [Damning Statement] + [Creator's Investigative Face]</strong></li>
+    </ul>
+
+    <h4>James Jani — The Calm Exposé Frame</h4>
+    <ul>
+      <li>Subject of the exposé shown (logo, face, symbol) + skeptical text overlay</li>
+      <li>Creator face occasionally but often just the target</li>
+      <li>Dark/moody aesthetic signals seriousness</li>
+      <li>Text often structured as a contradiction: "Why [admired thing] is actually [bad thing]"</li>
+    </ul>
+
+    <h4>Dhruv Rathee — The Political Alert Frame</h4>
+    <ul>
+      <li>Face with serious/concerned expression — active emotional signal</li>
+      <li>Political figures, flags, or newspaper headlines as context</li>
+      <li>Bold Hindi/English text with urgent phrasing</li>
+      <li>High saturation — designed for mobile visibility in bright light</li>
+      <li>Key formula: <strong>[Political entity] + [Damning verdict] + [Creator's authoritative face]</strong></li>
+    </ul>
+
+    <h4>Think School — The Business Case Frame</h4>
+    <ul>
+      <li>Brand logo + company name prominently featured</li>
+      <li>Host face with enthusiastic/surprised expression</li>
+      <li>Text with business outcome ("How X built a ₹X,000 crore empire")</li>
+      <li>Clean, professional aesthetic — signals MBA-quality content</li>
+    </ul>
+  </div>
+
+  <div class="analysis-block">
+    <h3>Psychological Triggers in Thumbnails</h3>
+    <table class="compare-table">
+      <thead><tr><th>Trigger</th><th>Mechanism</th><th>Who Uses It Best</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Facial expression</strong></td><td>Mirror neurons activate — we feel what the face shows</td><td>Dhruv Rathee, Johnny Harris</td></tr>
+        <tr><td><strong>Incomplete information</strong></td><td>Zeigarnik effect — the brain craves completion</td><td>James Jani, Vox</td></tr>
+        <tr><td><strong>Status anxiety</strong></td><td>"I'll look uninformed if I don't know this"</td><td>Vox, Think School</td></tr>
+        <tr><td><strong>Forbidden knowledge</strong></td><td>Reactance — we want what we're told we can't have</td><td>Johnny Harris, Dhruv Rathee</td></tr>
+        <tr><td><strong>Aesthetic pleasure</strong></td><td>Pure visual appeal creates positive association</td><td>Fern</td></tr>
+        <tr><td><strong>Identity confirmation</strong></td><td>"This video is for people like me"</td><td>Fern, Dhruv Rathee</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 6 — TITLE ENGINEERING                              ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s6">
+  <div class="section-label">Section 06</div>
+  <h2>Title <em>Engineering</em></h2>
+
+  <div class="analysis-block">
+    <h3>Master Title Frameworks</h3>
+    <h4>Framework 1: The Damning Reframe</h4>
+    <div class="formula">"Why [Admired/Neutral Thing] is Actually [Surprising Negative]"</div>
+    <p>Examples: "Why France is Still a Colonial Power" / "Why the Self-Help Industry is a Cult" / "Why India's Democracy is Under Threat"</p>
+    <p><strong>Psychology:</strong> Cognitive dissonance. The viewer holds two conflicting beliefs and needs the video to resolve them. Very high CTR on audiences with prior positive associations with the subject.</p>
+
+    <h4>Framework 2: The Hidden System</h4>
+    <div class="formula">"How [Powerful Entity] [Secretly] [Does Something You Didn't Know]"</div>
+    <p>Examples: "How America Manufactures Consent" / "How Corporations Control Your Government" / "How Zomato Makes Money Despite Losing Money"</p>
+    <p><strong>Psychology:</strong> Secret knowledge impulse. Taps into the belief that truth is hidden and understanding systems gives power.</p>
+
+    <h4>Framework 3: The Identity Statement</h4>
+    <div class="formula">"Why You Feel [Emotion]" / "The Problem With Being [Identity]"</div>
+    <p>Examples: "Why You Feel Empty" / "The Problem With Being Ambitious" / "Why You're Always Tired"</p>
+    <p><strong>Psychology:</strong> The video as a mirror. Maximum CTR among viewers who match the stated identity/emotion — the most targeted title formula that exists.</p>
+
+    <h4>Framework 4: The Geopolitical Verdict</h4>
+    <div class="formula">"[Country] is [Definitive Statement]"</div>
+    <p>Examples: "Russia is Cheating" / "America is Not a Democracy" / "India is at a Crossroads"</p>
+    <p><strong>Psychology:</strong> Definitive statements are more clickable than questions because they imply the creator has already done the analysis. Viewers want to judge the verdict rather than participate in the inquiry.</p>
+
+    <h4>Framework 5: The Fall Narrative</h4>
+    <div class="formula">"The Rise and Fall of [Entity]" / "How [Great Thing] Destroyed Itself"</div>
+    <p>Examples: "The Fall of Jet Airways" / "How WeWork Imploded" / "How Byju's Lost Everything"</p>
+    <p><strong>Psychology:</strong> Schadenfreude + cautionary tale + narrative satisfaction. Three psychological payoffs in one title — peak title efficiency.</p>
+
+    <h4>Framework 6: The Scale Reveal</h4>
+    <div class="formula">"The [Superlative] [Topic] You've Never Heard Of"</div>
+    <p>Examples: "The Largest Cult in the World" / "The Most Profitable Business Model in History" / "India's Biggest Space Mission"</p>
+    <p><strong>Psychology:</strong> Superlatives trigger the completionist instinct — if this is the MOST of something, I must know about it or my knowledge is incomplete.</p>
+
+    <h4>Reusable Title Templates</h4>
+    <div class="formula">
+[Country/Company/Person] has been [lying about / hiding / profiting from] [thing everyone uses/believes]
+
+The Real Reason [Famous Failure/Success] Happened
+
+How [Powerful System] Was Designed To [Keep You Down/Confused/Dependent]
+
+Why [Generation/Identity Group] is [Struggling/Winning/Burning Out]
+
+[Industry] is Broken. Here's Who Benefits.
+
+The [Adjective] Truth About [Beloved Brand/Movement/Person]
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 7 — COMPARATIVE ANALYSIS                           ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s7">
+  <div class="section-label">Section 07</div>
+  <h2>Comparative <em>Analysis</em></h2>
+
+  <div class="analysis-block">
+    <h3>Johnny Harris vs. Vox</h3>
+    <p><strong>Vox</strong> is an institution — multiple creators, consistent house style, brand-first. <strong>Johnny Harris</strong> is a person — single creator, singular voice, creator-first. This is the fundamental difference that explains everything else.</p>
+    <ul>
+      <li>Vox's authority comes from the institution's credibility. JH's authority comes from personal credibility built through physical presence and risk-taking.</li>
+      <li>Vox scales by hiring. JH cannot scale — which is also why he cannot be replicated.</li>
+      <li>Vox's videos have longer shelf life because they're topic-indexed. JH's videos have stronger initial impact because they're personality-indexed.</li>
+      <li>JH is more cinematic, more emotional, more personal. Vox is more informational, more credentialed, more shareable-as-reference.</li>
+    </ul>
+    <div class="insight"><p>Johnny Harris is what happens when a journalist becomes the story. Vox is what happens when journalism becomes a product.</p></div>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="teal">James Jani vs. Fern</h3>
+    <p>Both are long-form essayists, but they address fundamentally different human needs:</p>
+    <ul>
+      <li><strong>James Jani</strong> addresses the viewer's relationship with the external world — how society, systems, and ideologies manipulate them. His videos make viewers feel smarter and more protected.</li>
+      <li><strong>Fern</strong> addresses the viewer's relationship with their internal world — how they feel, who they are, why they suffer. His videos make viewers feel less alone.</li>
+      <li>Jani's audience wants intellectual armor. Fern's audience wants emotional sanctuary.</li>
+      <li>Jani needs a target (an ideology, a scammer, a system). Fern needs only an emotion.</li>
+    </ul>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="red">Dhruv Rathee vs. Mohak Mangal</h3>
+    <ul>
+      <li><strong>Dhruv</strong> is tribal and partisan — his content creates a strong in-group. This maximizes engagement but limits audience ceiling (those outside the tribe won't watch).</li>
+      <li><strong>Mohak</strong> is universal — science and space have no ideological alignment. His ceiling is much higher but his engagement depth is lower per viewer.</li>
+      <li>Dhruv's viewers watch every video. Mohak's viewers watch specific topics. Different algorithmic profiles: Dhruv needs subscribers, Mohak needs search SEO.</li>
+    </ul>
+  </div>
+
+  <div class="analysis-block">
+    <h3>Think School vs. Vox</h3>
+    <ul>
+      <li>Both use motion graphics, data visualization, and explanatory journalism. But <strong>Think School</strong> is warmer, more intimate, more Indian-context specific.</li>
+      <li>Vox speaks to systemic issues with a global progressive lens. Think School speaks to business and entrepreneurship with an aspirational Indian lens.</li>
+      <li>Think School's host energy is its differentiator — Gaurav Munjal's genuine enthusiasm is a warmth signal Vox's institutional voice can't replicate.</li>
+    </ul>
+  </div>
+
+  <!-- RANKING SECTION -->
+  <h3 style="font-family: var(--heading-font); font-weight:400; font-style:italic; font-size:1.3rem; color:var(--accent); margin: 3rem 0 1.5rem;">Creator Rankings by Dimension</h3>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Dimension</th>
+        <th>Rank 1</th>
+        <th>Rank 2</th>
+        <th>Rank 3</th>
+        <th>Why</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Storytelling</strong></td>
+        <td class="creator-col">Johnny Harris</td>
+        <td>Fern</td>
+        <td>James Jani</td>
+        <td>JH masters physical + narrative + visual storytelling simultaneously</td>
+      </tr>
+      <tr>
+        <td><strong>Virality Engineering</strong></td>
+        <td class="creator-col teal">Dhruv Rathee</td>
+        <td>Think School</td>
+        <td>Johnny Harris</td>
+        <td>Political content + tribal sharing = structural virality</td>
+      </tr>
+      <tr>
+        <td><strong>Authority Building</strong></td>
+        <td class="creator-col">Vox</td>
+        <td>Johnny Harris</td>
+        <td class="creator-col teal">Dhruv Rathee</td>
+        <td>Institutional credibility vs. personal credibility vs. political authority</td>
+      </tr>
+      <tr>
+        <td><strong>Emotional Impact</strong></td>
+        <td class="creator-col">Fern</td>
+        <td class="creator-col teal">Real Will Power</td>
+        <td>Johnny Harris</td>
+        <td>Fern operates entirely in the emotional register</td>
+      </tr>
+      <tr>
+        <td><strong>Editing Sophistication</strong></td>
+        <td class="creator-col">Johnny Harris</td>
+        <td>Fern</td>
+        <td>Vox</td>
+        <td>JH: cinematic. Fern: atmospheric. Vox: informational.</td>
+      </tr>
+      <tr>
+        <td><strong>Replay Value</strong></td>
+        <td class="creator-col">James Jani</td>
+        <td>Fern</td>
+        <td>Johnny Harris</td>
+        <td>Dense long-form that reveals new layers on re-watch</td>
+      </tr>
+      <tr>
+        <td><strong>Binge Potential</strong></td>
+        <td class="creator-col teal">Think School</td>
+        <td class="creator-col teal">Dhruv Rathee</td>
+        <td>Vox</td>
+        <td>Episodic formats and consistent topics drive session depth</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 8 — PSYCHOLOGICAL MANIPULATION                     ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s8">
+  <div class="section-label">Section 08</div>
+  <h2>Psychological <em>Manipulation</em></h2>
+
+  <div class="analysis-block">
+    <h3>Parasocial Engineering</h3>
+    <p>Parasocial relationships — where the viewer feels they know the creator personally — are the most powerful retention mechanism that exists. Every creator in this list builds parasocial bonds differently:</p>
+    <ul>
+      <li><strong>Johnny Harris:</strong> Personal vulnerability + physical presence in the field. He shares uncertainty. "I'm not sure I understand this yet." This is a counterintuitive authority move — admitting confusion makes you more trustworthy, not less.</li>
+      <li><strong>Fern:</strong> The creator's identity is the product. Viewers don't follow Fern for information — they follow him because they feel understood by him. The parasocial bond is emotional, not intellectual.</li>
+      <li><strong>Dhruv Rathee:</strong> Consistent political alignment creates community membership. Viewers feel they're part of Dhruv's resistance movement. He is their representative voice — a deeply powerful parasocial role.</li>
+      <li><strong>Think School:</strong> The enthusiastic teacher parasocial frame. Host energy signals: "I get excited about this because I genuinely love it." This is the warmest parasocial archetype — like a favorite professor.</li>
+    </ul>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="red">Ideological Framing as Addiction</h3>
+    <p>The most sophisticated manipulation in this group is not outrage engineering — it's identity capture. When a creator successfully makes their worldview part of your identity, you cannot stop watching because stopping means abandoning your identity.</p>
+    <ul>
+      <li><strong>Dhruv Rathee</strong> is the clearest example: being a "Dhruv Rathee viewer" is a political identity marker in India. You don't just watch his videos — you ARE the kind of person who watches his videos. This is a cultural-tribal capture that goes far beyond content loyalty.</li>
+      <li><strong>James Jani</strong> does the same with the "I can't be manipulated" identity. Once a viewer adopts this as their self-concept, they are paradoxically captured — they MUST keep watching to maintain the identity of someone who stays informed about manipulation.</li>
+      <li><strong>Fern</strong> captures the introspective-millennial identity. Once the viewer sees themselves as the kind of person who watches philosophical essay videos, they reinforce that identity with each new Fern video.</li>
+    </ul>
+    <div class="insight red"><p>The most dangerous psychological technique in this group: Dhruv Rathee's tribal identity capture. It creates an audience that will defend him, not just watch him. This is cult dynamics applied to educational content — functionally identical to how QAnon built its audience, just directed at left-liberal politics.</p></div>
+  </div>
+
+  <div class="analysis-block">
+    <h3>Dopamine Loop Architecture</h3>
+    <p>Successful YouTube videos are dopamine delivery systems. The structure mimics the variable reward schedules used in addictive apps:</p>
+    <ul>
+      <li><strong>Variable reveal timing:</strong> Revelations don't come at predictable intervals. The viewer never knows when the next surprising fact will arrive — the same mechanism as a slot machine.</li>
+      <li><strong>Escalating stakes:</strong> Each revelation is more significant than the last. The brain's reward anticipation grows through the video, making completion biologically compelling.</li>
+      <li><strong>Emotional contrast pacing:</strong> Alternating between tension (disturbing information) and relief (humor, hope, explanation) mirrors the anxiety-relief dopamine cycle of behaviorally addictive media.</li>
+      <li><strong>The ending that opens a new loop:</strong> Most creators end videos with a new question, a teaser for a follow-up, or a wider implication that implies the story isn't over. You leave satisfied but already wanting more.</li>
+    </ul>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="teal">The Trust Architecture</h3>
+    <p>Trust is not given — it's constructed. Here are the explicit trust signals each creator uses:</p>
+    <table class="compare-table">
+      <thead><tr><th>Creator</th><th>Primary Trust Signal</th><th>Secondary Trust Signal</th></tr></thead>
+      <tbody>
+        <tr><td class="creator-col">Johnny Harris</td><td>Physical presence in locations</td><td>Shown research process / primary sources</td></tr>
+        <tr><td class="creator-col">Vox</td><td>Institutional brand + journalist credentials</td><td>Data visualization from verified sources</td></tr>
+        <tr><td class="creator-col">James Jani</td><td>Calmness in the face of disturbing facts</td><td>Long-form depth signals commitment</td></tr>
+        <tr><td class="creator-col">Fern</td><td>Emotional honesty — shows own vulnerability</td><td>Aesthetic restraint signals integrity</td></tr>
+        <tr><td class="creator-col teal">Dhruv Rathee</td><td>Source citations visible on screen</td><td>Living abroad as proof of commitment</td></tr>
+        <tr><td class="creator-col teal">Think School</td><td>Host's genuine enthusiasm</td><td>Named sources, company data, annual reports</td></tr>
+        <tr><td class="creator-col teal">Mohak Mangal</td><td>Scientific accuracy + humility</td><td>References to ISRO/NASA primary sources</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 9 — BUSINESS & BRAND                               ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s9">
+  <div class="section-label">Section 09</div>
+  <h2>Business & <em>Brand Strategy</em></h2>
+
+  <div class="analysis-block">
+    <h3>Monetization Architecture Comparison</h3>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Creator</th>
+          <th>Primary Revenue</th>
+          <th>Secondary Revenue</th>
+          <th>Brand Moat</th>
+          <th>Sustainability</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="creator-col">Johnny Harris</td>
+          <td>YouTube AdSense + Nebula/Curiosity Stream</td>
+          <td>Sponsorships (high CPM niches: VPNs, finance)</td>
+          <td>Personal credibility + production quality</td>
+          <td>High — creator IS the product</td>
+        </tr>
+        <tr>
+          <td class="creator-col">Vox</td>
+          <td>YouTube + Streaming licensing</td>
+          <td>Vox Media editorial/events revenue</td>
+          <td>Institutional brand + talent pipeline</td>
+          <td>Very High — institution outlasts any creator</td>
+        </tr>
+        <tr>
+          <td class="creator-col">James Jani</td>
+          <td>AdSense + Sponsorships</td>
+          <td>Potential course/community</td>
+          <td>Rare video cadence + thoroughness</td>
+          <td>Medium — low upload cadence is risk</td>
+        </tr>
+        <tr>
+          <td class="creator-col">Fern</td>
+          <td>AdSense + Patreon/Membership</td>
+          <td>Sponsorships</td>
+          <td>Aesthetic voice + emotional niche</td>
+          <td>High for niche, limited for scale</td>
+        </tr>
+        <tr>
+          <td class="creator-col teal">Dhruv Rathee</td>
+          <td>YouTube AdSense (massive scale)</td>
+          <td>Brand partnerships + Courses</td>
+          <td>Political brand identity</td>
+          <td>Medium — dependent on political climate</td>
+        </tr>
+        <tr>
+          <td class="creator-col teal">Think School</td>
+          <td>YouTube + MBA-prep courses</td>
+          <td>Corporate workshops, speaking</td>
+          <td>Education brand + warm community</td>
+          <td>Very High — education is evergreen</td>
+        </tr>
+        <tr>
+          <td class="creator-col teal">Mohak Mangal</td>
+          <td>AdSense + Sponsorships</td>
+          <td>Brand deals (science/tech companies)</td>
+          <td>Science communication niche</td>
+          <td>High — science is perennial</td>
+        </tr>
+        <tr>
+          <td class="creator-col teal">Real Will Power</td>
+          <td>AdSense + Brand deals</td>
+          <td>Motivational speaking potential</td>
+          <td>Hindi motivational niche dominance</td>
+          <td>Medium — genre saturation risk</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="teal">Long-term Brand Moat Analysis</h3>
+    <h4>Who Has the Strongest Moat?</h4>
+    <p><strong>Vox</strong> — institutional brand that survives individual creator turnover. The "Vox explains" format is replicated globally but the original retains authority. This is the most defensible position in this group.</p>
+    <p><strong>Johnny Harris</strong> — his moat is himself, which is simultaneously the strongest and most fragile position. No one else can be Johnny Harris. But Johnny Harris can only create as fast as one person can create.</p>
+    <p><strong>Think School</strong> — the education-to-product funnel (content → courses → corporate training) is the most financially sophisticated model in the Indian group. The brand outlives any individual video.</p>
+    <h4>Who is Most Algorithm-Dependent?</h4>
+    <p><strong>Dhruv Rathee</strong> is most exposed to platform risk. His content is politically controversial, making him vulnerable to demonetization, reduced recommendation, or platform policy changes. He is also dependent on a specific political climate — his value to viewers fluctuates with the intensity of political events in India.</p>
+    <p><strong>Real Will Power</strong> faces the highest genre saturation risk — motivational content is the most-replicated format on YouTube, and there is no barrier to entry for competitors.</p>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 10 — OPPORTUNITIES                                 ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s10">
+  <div class="section-label">Section 10</div>
+  <h2>Content <em>Opportunities</em></h2>
+
+  <div class="analysis-block">
+    <h3>Gaps, Trends & Futures</h3>
+    <h4>Underexplored Content Gaps</h4>
+    <ul>
+      <li><strong>Emotional documentary format in India:</strong> No Indian creator occupies Fern's emotional-essay position. The introspective, philosophical long-form video for Indian youth experiencing modernization anxiety, identity confusion, and generational displacement is completely unmade.</li>
+      <li><strong>Visual investigative journalism in Hindi/Hinglish:</strong> Johnny Harris-style field investigative work about Indian geopolitical issues, border disputes, historical injustices — done cinematically, not as news commentary. Zero competition in this space.</li>
+      <li><strong>Animated documentary for social issues:</strong> Globally, animated documentary is exploding (Persepolis, Waltz With Bashir as film antecedents). On YouTube, it remains rare. Particularly for sensitive topics (conflict, trauma, mental health) where live footage is unavailable or inappropriate.</li>
+      <li><strong>Long-form historical accountability journalism:</strong> Who is making 30–45 minute deeply researched YouTube documentaries about post-colonial economic history, partition consequences, or institutional failures in India? No one at high production quality.</li>
+      <li><strong>The "philosophical current affairs" genre:</strong> Connecting specific political or social events to deeper philosophical, psychological, or historical frameworks. Not punditry — genuine intellectual documentary. No dedicated channel owns this in the Indian market.</li>
+    </ul>
+    <h4>Saturation Risks</h4>
+    <ul>
+      <li>Business case studies (Think School clones proliferating)</li>
+      <li>Hindi motivational biographies (Real Will Power format widely replicated)</li>
+      <li>Political fact-checking commentary (multiple Dhruv Rathee-style channels)</li>
+      <li>Explainer journalism (Vox format commoditized globally)</li>
+    </ul>
+    <h4>Next 5 Years: What Channels Will Dominate</h4>
+    <ul>
+      <li><strong>Cinematic personal essay docs</strong> — creators who combine Fern's emotional depth with Johnny Harris's visual ambition in underserved languages/markets</li>
+      <li><strong>AI-augmented documentary</strong> — creators who use AI for historical reenactments, animated sequences, and archival visualization (this is a production cost moat destroyer)</li>
+      <li><strong>Hyperlocal investigative journalism</strong> — granular investigative reporting on specific cities, communities, or institutions — too specific for major media, perfect for YouTube's algorithm</li>
+      <li><strong>Interactive/participatory documentary</strong> — formats where the audience shapes the investigation, votes on what is covered next, or contributes research</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 11 — REPLICATION BLUEPRINT                         ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s11">
+  <div class="section-label">Section 11</div>
+  <h2>Replication <em>Blueprint</em></h2>
+
+  <div class="analysis-block">
+    <h3>The Synthesis Channel Concept</h3>
+    <p>Based on the gap analysis, the highest-opportunity channel concept synthesizes:</p>
+    <ul>
+      <li>Johnny Harris's <strong>cinematic investigative presence</strong></li>
+      <li>James Jani's <strong>systematic exposé depth</strong></li>
+      <li>Fern's <strong>emotional intelligence and atmospheric aesthetics</strong></li>
+      <li>Dhruv Rathee's <strong>clarity of moral positioning</strong></li>
+    </ul>
+    <p>Applied to: <strong>human-stakes documentary storytelling in underserved cultural/geopolitical contexts</strong></p>
+  </div>
+
+  <div class="analysis-block">
+    <h3 class="teal">Step-by-Step Channel Growth Roadmap</h3>
+
+    <h4>Phase 1 — Foundation (Months 1–3)</h4>
+    <ul>
+      <li><strong>Niche selection:</strong> Choose 1 intersection of [topic expertise] × [emotional resonance] × [underserved audience]. Not "world politics" — "the hidden costs of [specific policy] on people who don't appear in the news."</li>
+      <li><strong>Aesthetic identity:</strong> Define your visual language before making video 1. Moodboard, color palette, music reference library, typography system. This is not optional — aesthetic coherence is authority signaling.</li>
+      <li><strong>Scripting system:</strong> Build the ACT 1/2/3 framework as a template. Write the first 3 video scripts to completion before filming any of them. Identify the voice.</li>
+      <li><strong>First 3 videos strategy:</strong> Video 1 = Your most emotionally resonant idea. Video 2 = Your most algorithmically optimized idea. Video 3 = Your most shareable/tweetable idea. Test all three psychological modalities early.</li>
+    </ul>
+
+    <h4>Phase 2 — Audience Building (Months 4–9)</h4>
+    <ul>
+      <li><strong>Upload cadence:</strong> 1 video / 4–6 weeks for long-form (20–45 min). Quality over cadence for this genre — algorithmic momentum comes from completion rate, not upload frequency.</li>
+      <li><strong>SEO targeting:</strong> Each video should have a primary search query it can rank for. Not "world history" but "why did the Ottoman Empire fall" — specific, searchable, evergreen.</li>
+      <li><strong>Community building:</strong> Comments section is your retention and loyalty mechanism. Respond personally to substantive comments. Create a comment culture.</li>
+      <li><strong>Cross-promotion:</strong> Identify 3–5 channels in the adjacent space (not direct competitors) and build genuine relationships. Guest appearances, mentions, and collab potential.</li>
+    </ul>
+
+    <h4>Phase 3 — Moat Building (Months 10–24)</h4>
+    <ul>
+      <li><strong>Signature format:</strong> By month 12, your audience should be able to describe your format to a stranger in one sentence. This clarity of format is a brand moat.</li>
+      <li><strong>Production cost increase:</strong> Reinvest AdSense into production quality — location filming, better color grade, original music composition. Each quality jump creates a new moat.</li>
+      <li><strong>Platform diversification:</strong> Podcast (audio versions), Patreon/Membership (early access + community), Newsletter (deepens the parasocial relationship between uploads).</li>
+      <li><strong>Long-form IP:</strong> After 12 months, develop your first "series" — 3–4 videos on the same theme that can be watched sequentially. Series create binge behavior and are algorithmically favored.</li>
+    </ul>
+
+    <h4>The Scripting Framework (Portable)</h4>
+    <div class="formula">
+TITLE: [Provocative claim or identity mirror — max 8 words]
+THUMBNAIL: [Creator face with intentional expression] + [Subject visual] + [3-word text]
+HOOK (0:00–1:00): State the anomaly/feeling. Don't introduce yourself.
+CONTEXT (1:00–5:00): Why this matters. Stakes. History in 90 seconds.
+INVESTIGATION (5:00–70%): Layer evidence. 2–3 unexpected reveals. Mid-video cliffhanger.
+MECHANISM (70–85%): The hidden "why" — the systemic reason this exists.
+PAYOFF (85–100%): Emotional or intellectual resolution. End on a question or reflection.
+    </div>
+
+    <h4>Thumbnail System</h4>
+    <div class="formula">
+EMOTIONAL RANGE: Pick 3 expressions to use across all thumbnails (serious/knowing/curious)
+PALETTE: 2 dominant colors + 1 accent. Use on every thumbnail.
+TEXT RULE: Max 5 words. Never describe — challenge.
+FACE RULE: Direct eye contact when making a claim. Profile/away when in mystery mode.
+TEST: Would this thumbnail make sense in black and white? If yes, contrast is correct.
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  SECTION 12 — FINAL VERDICT                                 ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="section" id="s12">
+  <div class="section-label">Section 12</div>
+  <h2>Final <em>Verdict</em></h2>
+
+  <div class="verdict-grid">
+    <div class="verdict-card">
+      <div class="verdict-label">Strategically Smartest</div>
+      <div class="verdict-answer">Johnny Harris</div>
+      <div class="verdict-sub">Built a personal brand that scales through quality, not quantity. Created a format (investigative field documentary) that is extremely difficult to imitate. Every video adds to a compounding authority portfolio.</div>
+    </div>
+    <div class="verdict-card">
+      <div class="verdict-label">Deepest Psychology Understanding</div>
+      <div class="verdict-answer">James Jani</div>
+      <div class="verdict-sub">His entire channel is built on the irony that content about manipulation uses manipulation. He knows exactly what he's doing — the meta-awareness of his approach is its own strategy.</div>
+    </div>
+    <div class="verdict-card">
+      <div class="verdict-label">Most Algorithmically Optimized</div>
+      <div class="verdict-answer teal">Dhruv Rathee</div>
+      <div class="verdict-sub">Political rage-sharing creates algorithmic velocity that no quality investment can match. Both fans and enemies share his content equally. This is structural virality, not earned.</div>
+    </div>
+    <div class="verdict-card">
+      <div class="verdict-label">Would Survive Platform Changes Best</div>
+      <div class="verdict-answer">Vox</div>
+      <div class="verdict-sub">Institutional brands survive platform disruption. Their editorial IP, journalist relationships, and multi-platform publishing infrastructure means they exist independently of YouTube's algorithm.</div>
+    </div>
+    <div class="verdict-card">
+      <div class="verdict-label">Strongest Long-term Empire Potential</div>
+      <div class="verdict-answer teal">Think School</div>
+      <div class="verdict-sub">The education-to-product funnel (content → courses → corporate training → books → events) gives Think School a commercial architecture that dwarfs pure YouTube channels. Content is the top of a real business funnel.</div>
+    </div>
+    <div class="verdict-card">
+      <div class="verdict-label">Hardest to Replicate</div>
+      <div class="verdict-answer">Johnny Harris</div>
+      <div class="verdict-sub">You cannot fake being in a location. You cannot fake the 10,000 hours of journalism experience. You cannot manufacture his specific combination of political courage and cinematic skill.</div>
+    </div>
+    <div class="verdict-card">
+      <div class="verdict-label">Easiest to Imitate Badly</div>
+      <div class="verdict-answer teal">Real Will Power</div>
+      <div class="verdict-sub">The format (success story + emotional music + dramatic narration) is so replicable that thousands of channels do it. But "easy to imitate" means fully saturated. The format alone is not a moat.</div>
+    </div>
+    <div class="verdict-card">
+      <div class="verdict-label">Most Underrated Creator</div>
+      <div class="verdict-answer">Fern</div>
+      <div class="verdict-sub">Fern has built the most loyal per-viewer relationship in this group. Low view counts per video mask an extraordinarily deep connection with a highly engaged audience — the kind of depth every creator wants but almost none achieve.</div>
+    </div>
+  </div>
+
+  <!-- TOP 20 LESSONS -->
+  <h3 style="font-family: var(--heading-font); font-weight:400; font-style:italic; font-size:1.5rem; color:var(--accent); margin: 4rem 0 2rem;">Top 20 Lessons From All Creators</h3>
+
+  <div class="lesson-grid">
+    <div class="lesson-card">
+      <div class="lesson-num">01</div>
+      <div class="lesson-title">Sell a feeling, not information</div>
+      <div class="lesson-body">Information is available everywhere. Emotional resonance is rare. Every viral video in this group made the viewer feel something specific — not just know something.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">02</div>
+      <div class="lesson-title">The title IS the promise</div>
+      <div class="lesson-body">Every word in a title must do work. The best titles state a promise so specific that only one viewer type will click — but that viewer type will convert at 80%+.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">03</div>
+      <div class="lesson-title">Aesthetic is authority</div>
+      <div class="lesson-body">Before a viewer processes a single word, they've already judged your competence from your color grade, font choice, and edit rhythm. Aesthetic coherence signals intellectual coherence.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">04</div>
+      <div class="lesson-title">Physical presence creates irreplaceable trust</div>
+      <div class="lesson-body">Johnny Harris going to North Korea/France is not just B-roll — it's proof of investment. No one who hasn't been there can compete. Location is a moat.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">05</div>
+      <div class="lesson-title">Your audience wants an identity, not education</div>
+      <div class="lesson-body">The viewers who are most loyal don't just watch your content — they describe themselves as the kind of person who watches you. Sell an identity first, knowledge second.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">06</div>
+      <div class="lesson-title">Calm outrage outperforms loud outrage</div>
+      <div class="lesson-body">James Jani and Johnny Harris deliver damning information without raising their voice. This restraint makes the viewer generate their own outrage — which they own and share.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">07</div>
+      <div class="lesson-title">Music is a co-narrator, not wallpaper</div>
+      <div class="lesson-body">The creators with the highest retention use music that carries independent narrative meaning — not background noise, but an emotional score that tells its own story.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">08</div>
+      <div class="lesson-title">The mid-video cliffhanger is the most powerful retention tool</div>
+      <div class="lesson-body">Every successful creator places a major revelation or unresolved tension at the 40–55% mark. This is the natural dropout point — a hook here doubles completion rates.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">09</div>
+      <div class="lesson-title">Never summarize — always imply</div>
+      <div class="lesson-body">The weakest endings are summaries. The strongest endings leave the viewer with one unanswered question — the one that implies a next video, a next investigation, a next feeling.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">10</div>
+      <div class="lesson-title">Owned emotions are more viral than transmitted ones</div>
+      <div class="lesson-body">Structure your evidence so viewers reach your conclusion themselves. Self-generated conclusions are held more strongly, shared more frequently, and defended more passionately.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">11</div>
+      <div class="lesson-title">Low upload cadence can be a quality signal</div>
+      <div class="lesson-body">James Jani and Fern upload rarely. This scarcity creates anticipation and positions each video as an event rather than a feed item. Fewer videos, higher per-video impact.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">12</div>
+      <div class="lesson-title">Admitting uncertainty builds credibility</div>
+      <div class="lesson-body">Johnny Harris's "I'm not sure about this yet" is more credibility-building than false certainty. In a landscape of confident hot-takes, expressed uncertainty is differentiation.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">13</div>
+      <div class="lesson-title">Failure stories outperform success stories</div>
+      <div class="lesson-body">Across every creator: business failures, political failures, personal failures attract more views than equivalent successes. Failure is more emotionally rich and universally relatable.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">14</div>
+      <div class="lesson-title">The "why" is always more viral than the "what"</div>
+      <div class="lesson-body">"What happened to Jet Airways" is less powerful than "Why Jet Airways was destined to fail." Why implies a system. Systems imply wider relevance. Wider relevance = more sharing.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">15</div>
+      <div class="lesson-title">Build a recurring format, not just recurring topics</div>
+      <div class="lesson-body">Vox's "Borders," JH's map investigations, Think School's business case studies — recurring formats train viewer behavior. They know when to watch, what to expect, and feel early-access rewarded.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">16</div>
+      <div class="lesson-title">Your brand is your constraint system</div>
+      <div class="lesson-body">Every successful creator in this group says no to content that doesn't fit their brand more than they say yes. Brand clarity requires the discipline of refusal.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">17</div>
+      <div class="lesson-title">Anti-clickbait is the new clickbait</div>
+      <div class="lesson-body">Fern's restrained thumbnails stand out precisely because they don't look like YouTube thumbnails. In a feed of screaming faces, quiet authority is the true pattern interrupt.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">18</div>
+      <div class="lesson-title">Comments are your best market research</div>
+      <div class="lesson-body">The comments under your best-performing videos contain your next 20 video ideas. The emotional language viewers use in comments is the exact language your next title should use.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">19</div>
+      <div class="lesson-title">Distribution beats production quality</div>
+      <div class="lesson-body">A perfectly crafted video that no one watches is worth less than an imperfect video with a perfect title and thumbnail. Distribution systems (title, thumbnail, SEO) deserve equal production investment.</div>
+    </div>
+    <div class="lesson-card">
+      <div class="lesson-num">20</div>
+      <div class="lesson-title">The most powerful thing you can do is make someone feel less alone</div>
+      <div class="lesson-body">Every channel in this list, at its core, is providing a version of this service. Whether through political solidarity, intellectual community, emotional recognition, or existential companionship — belonging is the product.</div>
+    </div>
+  </div>
+
+  <!-- FINAL STRATEGIC INSIGHT -->
+  <div style="margin-top: 4rem; padding: 3rem; border: 1px solid var(--accent); background: rgba(200,169,110,0.05);">
+    <div class="section-label">The Single Most Powerful Viral Strategy Across All Channels</div>
+    <h3 style="font-family: var(--heading-font); font-size: 1.8rem; font-weight:400; font-style:italic; line-height:1.3; margin: 1rem 0 1.5rem;">Make the viewer the protagonist.</h3>
+    <p style="font-size: 14px; line-height: 1.9; color: #c8c4bc; max-width: 700px;">Every creator in this list — regardless of topic, format, or market — structures their content so the viewer is not a passive audience member but a participant in a story. Fern makes you the lonely protagonist finding meaning. Johnny Harris makes you the investigator uncovering truth. Dhruv Rathee makes you the resistance fighter. Think School makes you the business analyst. When viewers are the protagonist, they don't just watch — they inhabit. Inhabited content gets shared because sharing it is an act of self-expression, not just recommendation. This is the single deepest structural truth about viral documentary content on YouTube. Every technical decision — title, thumbnail, hook, pacing, music, script — should serve this one purpose: <strong>put the viewer inside the story.</strong></p>
+  </div>
+
+  <!-- BIGGEST HIDDEN PATTERN -->
+  <div style="margin-top: 2rem; padding: 3rem; border: 1px solid var(--border2); background: var(--bg3);">
+    <div class="section-label">The Biggest Hidden Pattern Across All 8 Channels</div>
+    <h3 style="font-family: var(--heading-font); font-size: 1.5rem; font-weight:400; font-style:italic; margin: 1rem 0 1rem;">None of them are really about what they appear to be about.</h3>
+    <p style="font-size: 14px; line-height: 1.9; color: #c8c4bc; max-width: 700px;">Vox isn't about policy — it's about intelligent social identity. Johnny Harris isn't about geopolitics — it's about moral courage. Think School isn't about business — it's about aspiration. Fern isn't about psychology — it's about belonging. Dhruv Rathee isn't about politics — it's about righteousness. The surface subject is just the entry point. The real product is always an emotional or identity service. This mismatch between stated subject and actual value — and the ability to execute both simultaneously — is the single most replicable and most underappreciated pattern in high-performing documentary YouTube content.</p>
+  </div>
+
+</div>
+
+<!-- footer -->
+<div style="padding: 3rem 8vw; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: gap; gap: 1rem;">
+  <div style="font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em;">YOUTUBE FORENSICS REPORT — 8 CREATORS — 12 SECTIONS</div>
+  <div style="font-family: var(--mono); font-size: 11px; color: var(--muted);">Prepared for use in OnceDoc / by.humza creative strategy</div>
+</div>
+
+</body>
+</html>
